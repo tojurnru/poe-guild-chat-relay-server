@@ -30,22 +30,20 @@ app.use((req, res, next) => {
  * error handler
  */
 app.use((err, req, res, next) => {
-  const json = res.locals;
+  const locals = res.locals;
   const status = err.status || 500;
 
-  json.message = err.message;
-
-  console.log(req.app.get('env'));
+  locals.status = status;
+  locals.message = err.message;
 
   if (NODE_ENV === 'development') {
-    err.status = status;
     err.stacks = err.stack.split('\n');
-    json.error = err;
+    locals.error = err;
   }
 
   // return error
   res.status(status);
-  res.json(json);
+  res.json(locals);
 });
 
 export default app;
