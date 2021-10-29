@@ -1,39 +1,61 @@
+import auth from 'basic-auth';
 import { Router } from 'express';
+import path from 'path';
+
 import logger from '../controllers/logger';
 import message from '../controllers/message';
+import client from '../controllers/client';
 
-const { GUILD_NAME, TOKEN } = process.env;
-
+const { GUILD_TAG } = process.env;
+const filename = path.basename(__filename);
 const router = Router();
 
-logger.debug(`GUILD_NAME: ${GUILD_NAME}, TOKEN: ${TOKEN}`);
+logger.info(`GUILD_TAG: ${GUILD_TAG}`);
 
-router.use((req, res, next) => {
-  // @ts-ignore
-  const [bearer, token] = req.get('authorization').split(' ');
+const authenticate = (req): string | null => {
+  const authorization = req.get('authorization');
+  const { name, pass } = auth.parse(authorization);
 
   // check auth token
-  if (token !== TOKEN) {
-    res.status(400).json({ status: 400 });
-    return;
+  if (pass !== GUILD_TAG) {
+    return null;
   }
 
   // check user agent
   const ua = req.get('user-agent');
   if (!ua || !ua.includes('tojurnru')) {
-    res.status(400).json({ status: 400 });
-    return;
+    return null;
   }
 
-  next();
+  return name;
+};
+
+router.use((req, res, next) => {
+  const clientId = authenticate(req);
+  if (clientId) {
+    req.clientId = clientId;
+    next();
+  } else {
+    res.status(400).json({ status: 400 });
+  }
 });
 
 router.post('/message', (req, res) => {
-  const { body = [] } = req;
+  const { clientId, body = [] } = req;
+
+  logger.debug(
+    `${filename} | ClientID: ${clientId}, Data Length: ${body.length}`,
+  );
 
   message.handle(body);
 
-  res.json({ status: 200, count: body.length });
+  const clients = client.upsertClient(clientId);
+
+  res.json({
+    status: 200,
+    clients: clients.length,
+    received: body.length,
+  });
 });
 
 export default router;

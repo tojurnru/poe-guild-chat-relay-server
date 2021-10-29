@@ -1,6 +1,7 @@
 import http from 'http';
 import app from './express';
 import logger from './controllers/logger';
+import scheduler from './controllers/scheduler';
 
 const { PORT } = process.env;
 
@@ -37,6 +38,9 @@ const onListening = () => {
   const addr = server.address();
   const bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port;
   logger.info('Listening on ' + bind);
+
+  // start scheduler
+  scheduler.processLoop();
 };
 
 /**

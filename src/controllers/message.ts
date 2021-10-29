@@ -1,57 +1,66 @@
-import logger from './logger';
-import { postMessage } from '../api/discord';
-
-const { GUILD_NAME } = process.env;
+import discord from '../api/discord';
 
 type Line = {
-  guild: string;
   member: string;
   message: string;
+  time?: number;
 };
 
-const MAX = 50;
-const history: Line[] = [];
-let newMessages: string[] = [];
+const EXPIRE_MS = 30 * 1000; // 30 seconds
 
-const sendToDiscord = async () => {
-  if (newMessages.length > 0) {
-    const messages = newMessages;
-    newMessages = [];
-    await postMessage(messages.join('\n'));
-  }
+let history: Line[] = [];
+let newLines: Line[] = [];
 
-  setTimeout(sendToDiscord, 1500);
+/**
+ * Functions
+ */
+
+export const clearHistory = () => {
+  const expiry = Date.now() - EXPIRE_MS;
+
+  history = history.filter((line) => {
+    return line.time && line.time > expiry;
+  });
 };
 
-// start the loop
-sendToDiscord();
+export const sendToDiscord = async () => {
+  if (newLines.length === 0) return;
+
+  const lines = newLines;
+  newLines = [];
+
+  const messages = lines.map(({ member, message }) => {
+    return `\`${member} \`: ${message}`;
+  });
+
+  await discord.postMessage(messages.join('\n'));
+};
+
+/**
+ * Handle Messages
+ */
 
 const handle = (lines: Line[]) => {
-  logger.debug(`message received: ${lines.length}`);
-
   for (const line of lines) {
-    const { guild, member, message } = line;
+    const { member, message } = line;
 
-    // filter other guild messages
-    if (guild !== GUILD_NAME) continue;
-
-    // filter old messages
+    // skip old messages
     const found = history.find((h) => {
       return h.member === member && h.message === message;
     });
-    if (found) continue;
-
-    // update history
-    history.push(line);
-    if (history.length > MAX) {
-      history.shift();
+    if (found) {
+      continue;
     }
 
-    // convert to string and add to queue
-    newMessages.push(`\`${member}\`: ${message}`);
+    // add into history and newLines
+    line.time = Date.now();
+    history.push(line);
+    newLines.push(line);
   }
 };
 
 export default {
+  clearHistory,
+  sendToDiscord,
   handle,
 };
