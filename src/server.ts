@@ -1,6 +1,6 @@
 import http from 'http';
 import app from './express';
-import logger from './controller/logger';
+import logger from './controllers/logger';
 
 const { PORT } = process.env;
 
