@@ -8,7 +8,7 @@ router.get('/', (req, res) => {
   res.json({ name, version });
 });
 
-router.post('/request', (req, res) => {
+router.all('/request', (req, res) => {
   const {
     hostname,
     ip,
