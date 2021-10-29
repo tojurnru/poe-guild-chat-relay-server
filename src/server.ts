@@ -1,5 +1,5 @@
 import http from 'http';
-import app from './express';
+import app from './controllers/express';
 import logger from './controllers/logger';
 import scheduler from './controllers/scheduler';
 

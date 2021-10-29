@@ -1,7 +1,7 @@
 {
-  "name": "poe-chat-relay-server",
+  "name": "poe-guild-chat-relay-server",
   "version": "1.0.0",
-  "description": "A Server that receive in game chat and post to discord.",
+  "description": "A Server that receive in game guild chat (from client) and post to discord.",
   "author": "tojurnru <thisisexactlymyemail@gmail.com>",
   "license": "Apache-2.0",
   "engines": {
@@ -17,6 +17,7 @@
     "clean": "rimraf coverage build tmp",
     "prebuild": "npm run lint",
     "build": "tsc -p tsconfig.release.json",
+    "postbuild": "cp package.json build/package.json",
     "build:watch": "tsc -w -p tsconfig.release.json",
     "lint": "eslint . --ext .ts,.tsx",
     "test": "jest --coverage",

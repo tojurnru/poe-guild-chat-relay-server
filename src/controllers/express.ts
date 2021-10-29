@@ -3,8 +3,8 @@ import express from 'express';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 
-import indexRouter from './routes/index';
-import apiRouter from './routes/api';
+import indexRouter from '../routes/index';
+import apiRouter from '../routes/api';
 
 const { NODE_ENV } = process.env;
 
@@ -29,6 +29,7 @@ app.use((req, res, next) => {
 /**
  * error handler
  */
+// eslint-disable-next-line
 app.use((err, req, res, next) => {
   const locals = res.locals;
   const status = err.status || 500;
